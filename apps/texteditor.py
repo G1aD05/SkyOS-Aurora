@@ -1,8 +1,10 @@
 import os
 import sys
 
+
 def exit_app():
     sys.exit()
+
 
 def create_file(filename):
     with open(filename, 'w') as file:
@@ -14,6 +16,7 @@ def create_file(filename):
             file.write(line + "\n")
     print(f"File '{filename}' created successfully.")
 
+
 def read_file(filename):
     if os.path.isfile(filename):
         with open(filename, 'r') as file:
@@ -21,6 +24,7 @@ def read_file(filename):
             print(file.read())
     else:
         print(f"File '{filename}' does not exist.")
+
 
 def edit_file(filename):
     if os.path.isfile(filename):
@@ -34,6 +38,7 @@ def edit_file(filename):
         print(f"File '{filename}' updated successfully.")
     else:
         print(f"File '{filename}' does not exist.")
+
 
 def main():
     print("Welcome to texteditor!")
@@ -54,6 +59,7 @@ def main():
             break  # Add this line to actually exit the loop
         else:
             print("Invalid command. Please enter 'create', 'read', 'edit', or 'exit'.")
+
 
 if __name__ == "__main__":
     main()

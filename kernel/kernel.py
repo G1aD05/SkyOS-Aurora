@@ -7,36 +7,37 @@ import hashlib
 from datetime import datetime
 import requests
 import urllib.request
+from COLORS import *
+from _types import *
 
-# hashed password for secutity purposes.
+# hashed password for security purposes.
 # Okay, I should explain what a SkyOS Aurora 1.2+ app is.
 # A SkyOS Aurora 1.2+ app is a Python script that is located in in the apps folder,
 # That can be ran by the kernel.
-# Same, same. But diffrent.
+# Same, same. But different.
 # You can now run multiple files (in a folder inside the apps folder. So the launcher you make will run something like ./apps/myapp/script1.py and ./apps/myapp/script2.py)
 # from a single app, for devs, this means you can port a whole game or app to SkyOS Aurora, without haing to make it a single file.
 # Of course, each file has to fall back to the main file, which will have to fall back to the kernel.
 # I might make a guide for how to make a SkyOS Aurora 1.2+ app, but for now, you can just follow the current sturcture, then add mutltiple files in the folder you run it from.
-# Installers and stuff will soon be suported.
-# okay well i am now doing this as a class project so i guess i have motivation now, uhhh lets go!
+# Installers and stuff will soon be supported.
+# okay well i am now doing this as a class project so i guess i have motivation now, uh lets go!
 
-valid_version = "1.2.0"
+# Added code improvements
 
-colors = {
-    "sky_blue": "\033[38;5;39m",
-    "bright_cyan": "\033[96m",
-    "bright_magenta": "\033[95m",
-    "bright_yellow": "\033[93m",
-    "reset": "\033[0m",
-    "clear": "\033[2J\033[H"
-}
+__version__ = "1.2.0"
 
 current_hour = datetime.now().hour
-version = "SkyOS" # Yeahhhhhhhhhh.... the deafault will be SkyOS, so will it be when the user dowloads it. And I am lazy. Soooooooooooo... YEAH
+version = "SkyOS"  # Yeahhhhhhhhhh.... the deafault will be SkyOS, so will it be when the user dowloads it. And I am lazy. Soooooooooooo... YEAH
 treevalue = None
 
+
+def signout():
+    with open(signed_in_file, "w") as session_file:
+        session_file.write("0")
+
+
 def print_boot_screen():
-    print(colors["clear"], end="")
+    print(CLEAR, end="")
 
     skyos_art = r"""
 
@@ -51,11 +52,12 @@ def print_boot_screen():
     
 """
 
-    print(colors["sky_blue"] + skyos_art + colors["reset"])
-    print(f"{colors['bright_magenta']}Loading SkyOS Aurora 1.1...{colors['reset']}")
+    print(SKY_BLUE + skyos_art + RESET)
+    print(f"{BRIGHT_MAGENTA}Loading SkyOS Aurora 1.1...{RESET}")
     time.sleep(5)
     os.system('cls' if platform.system() == "Windows" else 'clear')
-    print(colors["clear"], end="")
+    print(CLEAR, end="")
+
 
 # Function to get the username based on the OS
 def get_username():
@@ -64,29 +66,31 @@ def get_username():
     else:
         return os.getenv('USER')
 
+
 username = get_username()
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 
 root_path = os.path.abspath(os.path.join(this_dir, '..'))  # Go up two levels to get the root directory
 
-RED = "\033[31m"
-RESET = "\033[0m"
-
 # User files at root
 username_file = os.path.join(root_path, "username.txt")
 password_file = os.path.join(root_path, "password.txt")
 signed_in_file = os.path.join(root_path, "signed_in.txt")
 
-def panic(errorCode):   
-    print(f"SkyOS Aurora has crashed. Error code: {errorCode}")
+
+def panic(error_code: ErrorCode):
+    print(f"SkyOS Aurora has crashed. Error code: {error_code.content}")
+    print(f"Error details: {error_code.details}")
     print("Please report this error to the SkyOS Aurora development team.")
     print("The system will now shut down to prevent further issues.")
     print("Shutting down in 10 seconds...")
+    # TODO Scoping issues, may want to change that in the future
     with open(signed_in_file, "w") as session_file:
         session_file.write("0")
     time.sleep(10)
     os._exit(0)
+
 
 # Setup paths based on root_path
 setup_script_path = os.path.join(root_path, 'setup', 'setup.py')
@@ -96,20 +100,24 @@ bios_log_location = os.path.join(root_path, 'bios_log.txt')
 path_location = os.path.join(root_path, 'path.txt')
 skypkg_path = os.path.join(root_path, "skypkg", "skypkg.py")
 
-# write all the programs launchers or 1fileapps to the path file
+
+# write all the programs launchers or 1 file apps to the path file
 def write_path_file():
     open(path_location, 'w').close()  # Clear the file first
     for app in os.listdir(apps_dir):
         with open(path_location, 'a') as path_file:
-            # now avoids writing folders for multi file apps, and writes only 1fileapps and launchers.
+            # now avoids writing folders for multi file apps, and writes only 1 file apps and launchers.
             path_file.write(f"{os.path.join(apps_dir, app)}\n")
 
+
 write_path_file()
+
 
 def run_setup():
     if os.path.isfile(setup_script_path):
         try:
             subprocess.run([sys.executable, setup_script_path], check=True)
+        # TODO More scoping issues
         except subprocess.CalledProcessError as e:
             print(f"Error executing the setup script: {e}")
             os._exit(0)
@@ -117,10 +125,12 @@ def run_setup():
             print(f"An unexpected error occurred: {e}")
             os._exit(0)
     else:
-        panic("COULD_NOT_FIND_SETUP")
+        panic(ErrorCode("COULD_NOT_FIND_SETUP"))
         os._exit(0)
 
+
 def welcome():
+    # TODO So many scoping issues
     with open(signed_in_file, "w") as session_file:
         session_file.write("1")  # Mark signed in
     if current_hour < 12:
@@ -129,7 +139,7 @@ def welcome():
         print(f"Good afternoon, {stored_username} welcome back.")
 
     print("Welcome back to SkyOS Aurora! Thank you to all those contributors who worked on this!")
-    print(f"SkyOS Aurora {valid_version} written in Python 3.13.7")
+    print(f"SkyOS Aurora {__version__} written in Python 3.13.7")
     print("ALWAYS USE EXIT COMMAND TO EXIT THE OS, DO NOT CLOSE THE WINDOW!")
     print("For more info on the project type: info, help (commands) or copyright.")
     today = datetime.today()
@@ -139,6 +149,7 @@ def welcome():
         print("MERRY CHRISTMAS 🎅")
     if today.month == 4 and today.day == 1:
         print("APRIL FOOLS 😏")
+
 
 # Check if required files exist, if not run setup
 if not os.path.isfile(username_file) or not os.path.isfile(password_file) or not os.path.isfile(signed_in_file):
@@ -205,8 +216,10 @@ while True:
         print("license - show the license information for SkyOS")
 
     # command to run an app
-    elif command in [(name := os.path.splitext(os.path.basename(p))[0]) for p in open(path_location).read().splitlines()]:
-        script_path = next(p for p in open(path_location).read().splitlines() if os.path.splitext(os.path.basename(p))[0] == command)
+    elif command in [(name := os.path.splitext(os.path.basename(p))[0]) for p in
+                     open(path_location).read().splitlines()]:
+        script_path = next(
+            p for p in open(path_location).read().splitlines() if os.path.splitext(os.path.basename(p))[0] == command)
         if os.path.isfile(script_path):
             try:
                 subprocess.run([sys.executable, script_path], check=True)
@@ -219,15 +232,17 @@ while True:
         response = requests.get('https://alter-net-codes.github.io/skyosweb/aurora/archive/version.txt')
         latest_version = response.text.strip()
         filepath = os.path.join(root_path)
-        if latest_version != valid_version:
+        if latest_version != __version__:
             print(f"A new version of SkyOS Aurora is available: {latest_version}")
             update_choice = input("Do you want to update? (yes/no): ").strip().lower()
             if update_choice == "yes":
                 print("Updating SkyOS Aurora...")
                 # Download the latest version
-                listurlget = requests.get(f'https://alter-net-codes.github.io/skyosweb/aurora/archive/{latest_version}/files.txt')
+                listurlget = requests.get(
+                    f'https://alter-net-codes.github.io/skyosweb/aurora/archive/{latest_version}/files.txt')
                 file_urls = listurlget.text.strip().splitlines()
-                listfilepath = requests.get(f'https://alter-net-codes.github.io/skyosweb/aurora/archive/{latest_version}/filepath.txt')
+                listfilepath = requests.get(
+                    f'https://alter-net-codes.github.io/skyosweb/aurora/archive/{latest_version}/filepath.txt')
                 filepathsdownload = listfilepath.text.strip().splitlines()
                 currentfilenum = -1
                 for file_url in file_urls:
@@ -275,8 +290,8 @@ while True:
 
     elif command == "info":
         print("Developed by Alter Net codes. All rights reserved.")
-        print("This kernel may be reproduced if it meets the licenses terms. More info in the copyright command.")
-        print(f"Current SkyOS Aurora version: {valid_version}")
+        print("This kernel may be reproduced if it meets the license's terms. More info in the copyright command.")
+        print(f"Current SkyOS Aurora version: {__version__}")
 
     elif command == "copyright":
         print("Copyright © 2024-2025 Alter Net codes")
@@ -319,8 +334,7 @@ while True:
     elif command == "shutdown":
         os_option = input("Are you sure? Type 'yes' to confirm: ")
         if os_option == "yes":
-            with open(signed_in_file, "w") as session_file:
-                session_file.write("0")
+            signout()
             print("Shutting down the system...")
             time.sleep(2)
             if platform.system() == "Darwin":
@@ -335,8 +349,7 @@ while True:
     elif command == "reboot":
         os_option = input("Are you sure? Type 'yes' to confirm: ")
         if os_option == "yes":
-            with open(signed_in_file, "w") as session_file:
-                session_file.write("0")
+            signout()
             print("Rebooting the system...")
             time.sleep(2)
             if platform.system() == "Darwin":
@@ -359,7 +372,7 @@ while True:
                 except Exception as e:
                     print(f"An unexpected error occurred: {e}")
             else:
-                panic("MISSING_BIOS")
+                panic(ErrorCode("MISSING_BIOS"))
                 break
         else:
             print("You must be authenticated to run the BIOS.")
@@ -372,26 +385,26 @@ while True:
         print("But... where did you find the password?")
 
     elif command == "panic":
-        panic("test_panic")
+        panic(ErrorCode("test_panic"))
 
     elif command == "clear":
         os.system('cls' if platform.system() == "Windows" else 'clear')
         print("Screen cleared.")
-    
+
     elif command == "cls":
         os.system('cls' if platform.system() == "Windows" else 'clear')
         print("Screen cleared.")
 
     elif command == "version":
-        print(f"SkyOS Aurora version: {valid_version}")
-    
+        print(f"SkyOS Aurora version: {__version__}")
+
     elif command == "uname":
-        print(f"SkyOS Aurora version: {valid_version}")
+        print(f"SkyOS Aurora version: {__version__}")
         print(f"Username: {username}")
         print(f"Platform: {platform.system()} {platform.release()}")
 
     elif command == "uname -a":
-        print(f"SkyOS Aurora version: {valid_version}")
+        print(f"SkyOS Aurora version: {__version__}")
         print(f"Username: {username}")
         print(f"Platform: {platform.system()} {platform.release()}")
         print(f"Machine: {platform.machine()}")
@@ -399,7 +412,7 @@ while True:
         print(f"Python version: {platform.python_version()}")
 
     elif command == "uname -v":
-        print(f"SkyOS Aurora version: {valid_version}")
+        print(f"SkyOS Aurora version: {__version__}")
         print(f"Python version: {platform.python_version()}")
 
     elif command == "uname -m":
@@ -410,7 +423,7 @@ while True:
 
     elif command == "uname -o":
         print(f"Operating System: {platform.system()} {platform.release()}")
-        
+
     elif command == "uname -r":
         print(f"Release: {platform.release()}")
 
@@ -443,7 +456,7 @@ while True:
               "  -i, --hardware-platform print the hardware platform\n"
               "  -o, --operating-system print the operating system\n"
               "  -h, --help         display this help and exit")
-    
+
     elif command == "license":
         print("SkyOS is licensed under the BSD 3-Clause license.\n"
               "You are free to use, modify, and distribute this software as long as you include the original license text.\n"
@@ -462,4 +475,4 @@ while True:
     else:
         print(f"{RED}{command} is not a valid command or executable. Type 'help' for a list of commands.{RESET}")
 
-panic("NON-NORMAL SHUTDOWN! EMERGENCY!")  # in case the loop somehow breaks
+panic(ErrorCode("NON-NORMAL SHUTDOWN! EMERGENCY!"))  # in case the loop somehow breaks

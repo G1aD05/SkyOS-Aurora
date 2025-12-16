@@ -4,7 +4,7 @@ import sys
 import hashlib
 
 # Dev flag (set to False before release)
-dev = False
+dev = bool(open("devmode", "r").read())
 
 # Use the script's directory, not cwd
 this_dir = os.path.dirname(os.path.abspath(__file__))
