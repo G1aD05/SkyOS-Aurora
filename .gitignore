@@ -3,3 +3,6 @@ password.txt
 path.txt
 signed_in.txt
 username.txt
+.idea
+.DS_Store
+__pycache__
